@@ -1,0 +1,4 @@
+--try considering only NOUNS (part of speech data included in training data, and can use spacy for new test data)
+--considering sentence context (verbs and associated nouns, we would use spacy for this)
+--handling words that would not be found in a model or dictionary (because if that's the case, it's pretty likely it's a word of interest)
+--possibly of NN
