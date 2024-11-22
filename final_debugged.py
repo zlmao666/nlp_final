@@ -106,8 +106,8 @@ def sentence_classifier(string, avg_type_vecs, model, nlp):
     interesting_results = []
     
     for token in doc:
-        best_type = word_classifier(token.text, avg_type_vec, model)
-        if best_type not in ('O', 'MISC'):
+        best_type = word_classifier(token.text, avg_type_vecs, model)
+        if best_type not in ('O', 'B-MISC', 'I-MISC'):
             interesting_results.append((token.text, best_type))
     
     return interesting_results
@@ -126,13 +126,13 @@ def main():
     data = load_conll_data("conll2003/train.txt")
     type_dict = classify_conll_types(data)
     type_vectors = calculate_category_vectors(type_dict, model)
-    type2 = word_classifier("Confusing", type_vectors, model)
-    print(type2,"is the best type")
-    type3 = word_classifier("Reporter", type_vectors, model)
-    print(type3,"is the best type")
+    # type2 = word_classifier("Confusing", type_vectors, model)
+    # print(type2,"is the best type")
+    # type3 = word_classifier("Reporter", type_vectors, model)
+    # print(type3,"is the best type")
     
-    sentence = ""
-    type_sentence = sentence_classifier(sentence, avg_type_vecs, model, nlp)
+    sentence = "Mark Zuckerberg is really rich but he looks retarded, at least facebook is doing well"
+    type_sentence = sentence_classifier(sentence, type_vectors, model, nlp)
 
     print(type_sentence)
     
