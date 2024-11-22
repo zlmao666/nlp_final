@@ -104,7 +104,7 @@ def main():
 
     data = load_conll_data("conll2003/train.txt")
     type_dict = classify_conll_types(data)
-    type1 = word_classifier("Peter",type_dict, model)
+    type1 = word_classifier("henry",type_dict, model)
     print(type1)
 
 if __name__ == "__main__":
