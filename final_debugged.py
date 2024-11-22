@@ -49,15 +49,19 @@ def classify_conll_types(list):
                     dic[key].append(ls[0])     # Append the word to the type
     return dic
 
-def word_classifier(word,type_dict,model):
-    ''' returns the type of the word'''
 
+def word_classifier(word, type_dict, model):
+    ''' returns the type of the word'''
+    word = word.lower()
     try:
         # Get the vector for the word
         word_vec = model.get_vector(word)
     except KeyError:
         # If the word is not in the model's vocabulary, the word is classified as other (O)
+        print(f"Word '{word}' not in vocabulary, classifying as O.")
         return "O"
+
+    print(f"Vector for word '{word}': {word_vec[:5]}...")  # Show the first 5 values of the vector
 
     best_type = None
     best_similarity = -1  # Cosine similarity ranges from -1 to 1
@@ -67,12 +71,16 @@ def word_classifier(word,type_dict,model):
         # Calculate the average vector for the words in this NER category
         avg_type_vec = np.mean([model.get_vector(w) for w in words if w in model], axis=0)
 
-        # If there's no valid vector for the type (all words are out of vocab), skip
         if avg_type_vec is None or np.isnan(avg_type_vec).any():
+            print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
             continue
+
+        print(f"Avg vector for type '{ner_type}': {avg_type_vec[:5]}...")  # Show first 5 elements of the avg vector
 
         # Calculate cosine similarity between the word vector and the average category vector
         similarity = np.dot(word_vec, avg_type_vec) / (np.linalg.norm(word_vec) * np.linalg.norm(avg_type_vec))
+
+        print(f"Similarity between '{word}' and type '{ner_type}': {similarity:.4f}")
 
         # Update the best similarity and corresponding type if necessary
         if similarity > best_similarity:
@@ -80,6 +88,7 @@ def word_classifier(word,type_dict,model):
             best_type = ner_type
 
     return best_type
+
 
 
 
