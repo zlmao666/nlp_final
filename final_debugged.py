@@ -99,14 +99,27 @@ def word_classifier(word, avg_type_vecs, model):
     return best_type
     
     
+def sentence_classifier(string, avg_type_vecs, model, nlp):
+    ''' classifies a sentence and returns interesting results '''
+    doc = nlp(string)
+    
+    interesting_results = []
+    
+    for token in doc:
+        best_type = word_classifier(token.text, avg_type_vec, model)
+        if best_type not in ('O', 'MISC'):
+            interesting_results.append((token.text, best_type))
+    
+    return interesting_results
 
 def main():
-    print('Loading model...')
+    print('Loading models...')
     start = time.time()
     # model = gensim.downloader.load('word2vec-google-news-300') # This one is slower to load
     # model2 = gensim.downloader.load('glove-twitter-50')
 
     model = gensim.downloader.load('glove-wiki-gigaword-50') # This one is faster to load
+    nlp = spacy.load("en_core_web_sm")
     print('Done. ({} seconds)'.format(time.time() - start))
 
 
@@ -117,6 +130,11 @@ def main():
     print(type2,"is the best type")
     type3 = word_classifier("Reporter", type_vectors, model)
     print(type3,"is the best type")
+    
+    sentence = ""
+    type_sentence = sentence_classifier(sentence, avg_type_vecs, model, nlp)
+
+    print(type_sentence)
     
 
 if __name__ == "__main__":
