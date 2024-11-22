@@ -126,15 +126,15 @@ def main():
     data = load_conll_data("conll2003/train.txt")
     type_dict = classify_conll_types(data)
     type_vectors = calculate_category_vectors(type_dict, model)
-    # type2 = word_classifier("Confusing", type_vectors, model)
-    # print(type2,"is the best type")
-    # type3 = word_classifier("Reporter", type_vectors, model)
-    # print(type3,"is the best type")
+    type2 = word_classifier("and", type_vectors, model)
+    print(type2,"is the best type")
+    type3 = word_classifier("of", type_vectors, model)
+    print(type3,"is the best type")
     
-    sentence = "Mark Zuckerberg is really rich but he looks retarded, at least facebook is doing well"
-    type_sentence = sentence_classifier(sentence, type_vectors, model, nlp)
+    # sentence = "I have a lot of money and Elon Musk has a lot too. But I don't live in Texas."
+    # type_sentence = sentence_classifier(sentence, type_vectors, model, nlp)
 
-    print(type_sentence)
+    # print(type_sentence)
     
 
 if __name__ == "__main__":
