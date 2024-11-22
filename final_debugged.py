@@ -28,13 +28,12 @@ def load_conll_data(file_path):
 
 def get_conll_typs(lst): # FUNCTION NOT BEING USED!
     '''helper function to return a list of types'''
-    types = ['B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC']
+    types = ('B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC')
     return types
     
 def classify_conll_types(lst):
     ''' returns a dictionary of type: list of words within the type'''
     dic = {'B-ORG': [], 'O': [], 'B-MISC': [], 'B-PER': [], 'I-PER': [], 'B-LOC': [], 'I-ORG': [], 'I-MISC': [], 'I-LOC': []}
-
 
     for ls in lst:
         dic[ls[3]].append(ls[0]) # Does not avoid duplcates
