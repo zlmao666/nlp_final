@@ -3,7 +3,6 @@ import gensim.downloader
 import numpy as np
 import time
 import collections
-import copy
 
 def load_conll_data(file_path):
     attributes = []  
@@ -35,8 +34,15 @@ def merge_dicts(dict1, dict2):
 
 def get_conll_types():
     '''helper function to return a list of types'''
-    types = ('B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC')
-    return types    
+    # types = ('B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC')
+    types = ('ORG', 'O', 'MISC', 'PER', 'LOC')
+    return types
+    
+def map_conll_types(ner_type):
+    if ner_type == 'O':
+        return ner_type
+    else:
+        return ner_type[2:]
 
 def build_naive_dict(lst):
     ''' builds naive dictionary, a nested dictionary containing raw counts of each type for each word '''
@@ -44,7 +50,7 @@ def build_naive_dict(lst):
     for ls in lst:
         word = ls[0].lower()
         ner_type = ls[3]
-        (naive_dict[word])[ner_type] += 1
+        (naive_dict[word])[map_conll_types(ner_type)] += 1
 
     return naive_dict
     
@@ -60,12 +66,12 @@ def probabalize_naive_dict(naive_dict):
     
 def classify_conll_types(lst):
     ''' returns a dictionary of type: list of words within the type'''
-    dic = {'B-ORG': [], 'O': [], 'B-MISC': [], 'B-PER': [], 'I-PER': [], 'B-LOC': [], 'I-ORG': [], 'I-MISC': [], 'I-LOC': []}
+    dic = dict.fromkeys(get_conll_types(), [])
 
     for ls in lst:
         word = ls[0].lower()
         ner_type = ls[3]
-        dic[ner_type].append(word) # Does not avoid duplcates
+        dic[map_conll_types(ner_type)].append(word) # Does not avoid duplcates
     
     ''' OLD CODE
     # Then append the words to the correct types
@@ -98,8 +104,10 @@ def vector_checker(word, type_vectors, model):
         word_vec = model.get_vector(word)
     except KeyError:
         # If the word is not in the model's vocabulary, the word is classified as other (O)
-        # print(f"Word '{word}' not in vocabulary, classifying as I-PER.")
-        best_type = 'I-PER'
+        if word.isalpha():
+            best_type = 'PER'
+        else:
+            best_type = 'O'
         return best_type
 
     # print(f"Vector for word '{word}': {word_vec[:5]}...")  # Show the first 5 values of the vector
@@ -158,7 +166,7 @@ def sentence_classifier(string, naive_dict, type_vectors, model, nlp):
     
     for token in doc:
         best_type = word_classifier(token.text, naive_dict, type_vectors, model)
-        if best_type not in ('O', 'B-MISC', 'I-MISC'):
+        if best_type not in ('O', 'B-MISC', 'I-MISC', 'MISC'):
             interesting_results.append((token.text, best_type))
     
     return interesting_results
