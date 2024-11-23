@@ -20,10 +20,10 @@ def load_conll_data(file_path):
             word = tokens[0]   
             pos_tag = tokens[1]  
             chunk_tag = tokens[2]  
-            ner_tag = tokens[3]  
+            ner_tag = map_conll_types(tokens[3])
 
             # Add the attributes to the list
-            attributes.append([word, pos_tag, chunk_tag, ner_tag])
+            attributes.append((word, pos_tag, chunk_tag, ner_tag))
 
     return attributes
     
@@ -50,7 +50,7 @@ def build_naive_dict(lst):
     for ls in lst:
         word = ls[0].lower()
         ner_type = ls[3]
-        (naive_dict[word])[map_conll_types(ner_type)] += 1
+        (naive_dict[word])[ner_type] += 1
 
     return naive_dict
     
@@ -71,7 +71,7 @@ def classify_conll_types(lst):
     for ls in lst:
         word = ls[0].lower()
         ner_type = ls[3]
-        dic[map_conll_types(ner_type)].append(word) # Does not avoid duplcates
+        dic[ner_type].append(word) # Does not avoid duplcates
     
     ''' OLD CODE
     # Then append the words to the correct types
@@ -118,7 +118,7 @@ def vector_checker(word, type_vectors, model):
         type_vector = type_vectors[ner_type]
         
         if type_vector is None or np.isnan(type_vector).any():
-            print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
+            # print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
             continue
 
         # print(f"Avg vector for type '{ner_type}': {type_vector[:5]}...")  # Show first 5 elements of the avg vector
@@ -152,26 +152,59 @@ def word_classifier(word, naive_dict, type_vectors, model):
     best_type = naive_checker(word, naive_dict)
     
     if best_type == None:
-        print(f"'{word}' was not found naively, using vectors")
+        # print(f"'{word}' was not found naively, using vectors")
         best_type = vector_checker(word, type_vectors, model)
     
-    print(best_type,"is the best type for", word)
+    # print(best_type,"is the best type for", word)
     return best_type
     
-def sentence_classifier(string, naive_dict, type_vectors, model, nlp):
-    ''' classifies a sentence and returns interesting results '''
-    doc = nlp(string)
+def sentence_classifier(doc, naive_dict, type_vectors, model, nlp):
+    ''' classifies a sentence and returns only interesting results '''
+    tokenized = None
+    if type(doc) is str:
+        tokenized = nlp(doc)
     
     interesting_results = []
     
-    for token in doc:
-        best_type = word_classifier(token.text, naive_dict, type_vectors, model)
-        if best_type not in ('O', 'B-MISC', 'I-MISC', 'MISC'):
-            interesting_results.append((token.text, best_type))
+    if tokenized:
+        for token in tokenized:
+            best_type = word_classifier(token.text, naive_dict, type_vectors, model)
+            if best_type not in ('O', 'B-MISC', 'I-MISC', 'MISC'):
+                interesting_results.append((token.text, best_type))
+    else:
+        for token in doc:
+            best_type = word_classifier(token, naive_dict, type_vectors, model)
+            if best_type not in ('O', 'B-MISC', 'I-MISC', 'MISC'):
+                interesting_results.append((token, best_type))
     
     return interesting_results
+    
+def sentence_classifier_all_results(doc, naive_dict, type_vectors, model, nlp):
+    ''' classifies a sentence and returns all results '''
+    tokenized = None
+    if type(doc) is str:
+        tokenized = nlp(doc)
+    
+    results = []
+    
+    if tokenized:
+        for token in tokenized:
+            best_type = word_classifier(token.text, naive_dict, type_vectors, model)
+            results.append((token.text, best_type))
+    else:
+        for token in doc:
+            best_type = word_classifier(token, naive_dict, type_vectors, model)
+            results.append((token, best_type))
 
-def main():
+    
+    return results
+    
+def get_spacy_prediction(): #IMPLEMENT THIS
+
+    return None
+    
+def bootstrap():
+    ''' load models and data '''
     print('Loading model(s)...')
     start = time.time()
     # model = gensim.downloader.load('word2vec-google-news-300') # This one is slower to load
@@ -188,6 +221,13 @@ def main():
     type_vectors = calculate_category_vectors(type_dict, model)
     print('Done. ({} seconds)'.format(time.time() - start))
     print('-------------')
+    
+    return model, nlp, naive_dict, type_vectors
+
+def main():
+
+    model, nlp, naive_dict, type_vectors = bootstrap()
+    
     # word_classifier("napoleon", naive_dict, type_vectors, model)
     # word_classifier("fork", naive_dict, type_vectors, model)
     
