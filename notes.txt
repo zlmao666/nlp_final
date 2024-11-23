@@ -2,3 +2,30 @@
 --considering sentence context (verbs and associated nouns, we would use spacy for this)
 --handling words that would not be found in a model or dictionary (because if that's the case, it's pretty likely it's a word of interest)
 --possibly of NN
+
+
+notes for write-up
+--time/space complexity for using actual word embeddings, etc.
+--can try to compare with spacy and provided test set
+--implementing sentence context and how we would do that (verbs and prepositions)
+--how to handle words not in word vector model?
+--picking a dataset with _more_ categories for "other" would help
+
+
+Simplified tags:
+[('Adam', 'PER'), ('BBC', 'ORG'), ('William', 'PER'), ('Haley', 'ORG'), ('Controller', 'ORG'), ('BBC', 'ORG'), ('BBC', 'ORG'), 
+('national', 'ORG'), ('Adam', 'PER'), ('successfully', 'ORG'), ('newer', 'ORG'), ('ambition', 'ORG')]
+
+Original tags:
+[('Adam', 'B-PER'), ('BBC', 'B-ORG'), ('William', 'B-PER'), ('Haley', 'B-ORG'), ('Controller', 'B-ORG'), ('BBC', 'B-ORG'), ('BBC', 'B-ORG'), 
+('Adam', 'B-PER'), ('successfully', 'B-ORG'), ('newer', 'B-ORG'), ('ambition', 'B-ORG')]
+
+Simplified tags:
+[('eel', 'ORG'), ('Anguilla', 'ORG'), ('anguillla', 'PER'), ('Sargasso', 'PER'), ('Atlantic', 'LOC'), ('hatch', 'ORG'), ('transparent', 'ORG'),
+('larvae', 'ORG'), ('Atlantic', 'LOC'), ('currents', 'ORG'), ('shores', 'ORG'), ('Europe', 'LOC'),
+('transform', 'ORG'), ('bootlace', 'PER'), ('sized', 'ORG'), ('eels', 'ORG'), ('elvers', 'PER')]
+
+Original tags:
+[('eel', 'B-ORG'), ('Anguilla', 'B-ORG'), ('anguillla', 'PER'), ('Sargasso', 'PER'), ('Atlantic', 'B-LOC'), ('hatch', 'B-ORG'), ('transparent', 'B-ORG'),
+('larvae', 'B-ORG'), ('Atlantic', 'B-LOC'), ('currents', 'B-ORG'), ('shores', 'B-ORG'), ('Europe', 'B-LOC'),
+('transform', 'B-ORG'), ('bootlace', 'PER'), ('sized', 'B-ORG'), ('eels', 'B-ORG'), ('elvers', 'PER')]
