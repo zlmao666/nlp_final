@@ -2,6 +2,8 @@ import spacy
 import gensim.downloader
 import numpy as np
 import time
+import collections
+import copy
 
 def load_conll_data(file_path):
     attributes = []  
@@ -25,18 +27,45 @@ def load_conll_data(file_path):
             attributes.append([word, pos_tag, chunk_tag, ner_tag])
 
     return attributes
+    
+def merge_dicts(dict1, dict2):
 
-def get_conll_typs(lst): # FUNCTION NOT BEING USED!
+    newdict = collections.Counter(dict1) + collections.Counter(dict2)
+    return dict(newdict)
+
+def get_conll_types():
     '''helper function to return a list of types'''
     types = ('B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC')
-    return types
+    return types    
+
+def build_naive_dict(lst):
+    ''' builds naive dictionary, a nested dictionary containing raw counts of each type for each word '''
+    naive_dict = collections.defaultdict(lambda: dict.fromkeys(get_conll_types(), 0))
+    for ls in lst:
+        word = ls[0].lower()
+        ner_type = ls[3]
+        (naive_dict[word])[ner_type] += 1
+
+    return naive_dict
+    
+def probabalize_naive_dict(naive_dict):
+    ''' converts raw counts into probabilities in naive dictionary '''
+    for key in naive_dict:
+        nested_dict = naive_dict[key]
+        total = sum(nested_dict.values())
+        for ner_type, val in nested_dict.items():
+            nested_dict[ner_type] = val / total
+            
+    return naive_dict
     
 def classify_conll_types(lst):
     ''' returns a dictionary of type: list of words within the type'''
     dic = {'B-ORG': [], 'O': [], 'B-MISC': [], 'B-PER': [], 'I-PER': [], 'B-LOC': [], 'I-ORG': [], 'I-MISC': [], 'I-LOC': []}
 
     for ls in lst:
-        dic[ls[3]].append(ls[0]) # Does not avoid duplcates
+        word = ls[0].lower()
+        ner_type = ls[3]
+        dic[ner_type].append(word) # Does not avoid duplcates
     
     ''' OLD CODE
     # Then append the words to the correct types
@@ -50,46 +79,46 @@ def classify_conll_types(lst):
 
 def calculate_category_vectors(type_dict, model):
     ''' returns a dictionary mapping from each type to the mean vector for all of its associated words '''
-    avg_type_vecs = dict.fromkeys(type_dict)
+    type_vectors = dict.fromkeys(type_dict)
 
     # Loop over all types in the type_dict (NER categories)
     for ner_type, words in type_dict.items():
         # Calculate the average vector for the words in this NER category
-        avg_type_vecs[ner_type] = np.mean([model.get_vector(w) for w in words if w in model], axis=0)
+        type_vectors[ner_type] = np.mean([model.get_vector(w) for w in words if w in model], axis=0)
         
-    return avg_type_vecs
-
-def word_classifier(word, avg_type_vecs, model):
-    ''' returns the type of the word'''
-    word = word.lower()
+    return type_vectors
+    
+def vector_checker(word, type_vectors, model):
+    ''' checks word using gensim model vector similarity '''
+    best_type = None
+    best_similarity = -1  # Cosine similarity ranges from -1 to 1
+    
     try:
         # Get the vector for the word
         word_vec = model.get_vector(word)
     except KeyError:
         # If the word is not in the model's vocabulary, the word is classified as other (O)
-        print(f"Word '{word}' not in vocabulary, classifying as O.")
-        return "O"
+        # print(f"Word '{word}' not in vocabulary, classifying as I-PER.")
+        best_type = 'I-PER'
+        return best_type
 
-    print(f"Vector for word '{word}': {word_vec[:5]}...")  # Show the first 5 values of the vector
-
-    best_type = None
-    best_similarity = -1  # Cosine similarity ranges from -1 to 1
-
+    # print(f"Vector for word '{word}': {word_vec[:5]}...")  # Show the first 5 values of the vector
+    
     # Loop over all types in the type_dict (NER categories)
-    for ner_type in avg_type_vecs:
+    for ner_type in type_vectors:
         
-        avg_type_vec = avg_type_vecs[ner_type]
+        type_vector = type_vectors[ner_type]
         
-        if avg_type_vec is None or np.isnan(avg_type_vec).any():
+        if type_vector is None or np.isnan(type_vector).any():
             print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
             continue
 
-        print(f"Avg vector for type '{ner_type}': {avg_type_vec[:5]}...")  # Show first 5 elements of the avg vector
+        # print(f"Avg vector for type '{ner_type}': {type_vector[:5]}...")  # Show first 5 elements of the avg vector
 
         # Calculate cosine similarity between the word vector and the average category vector
-        similarity = np.dot(word_vec, avg_type_vec) / (np.linalg.norm(word_vec) * np.linalg.norm(avg_type_vec))
+        similarity = np.dot(word_vec, type_vector) / (np.linalg.norm(word_vec) * np.linalg.norm(type_vector))
 
-        print(f"Similarity between '{word}' and type '{ner_type}': {similarity:.4f}")
+        # print(f"Similarity between '{word}' and type '{ner_type}': {similarity:.4f}")
 
         # Update the best similarity and corresponding type if necessary
         if similarity > best_similarity:
@@ -97,44 +126,70 @@ def word_classifier(word, avg_type_vecs, model):
             best_type = ner_type
 
     return best_type
+
+def naive_checker(word, naive_dict):
+    ''' checks word naively against training data and returns highest probability category, returns None if not found'''
     
+    if word not in naive_dict:
+        return None
+        
+    ner_types = naive_dict[word]
+    best_type = max(ner_types.keys(), key=ner_types.get)
+    return best_type
     
-def sentence_classifier(string, avg_type_vecs, model, nlp):
+def word_classifier(word, naive_dict, type_vectors, model):
+    ''' returns the type of the word'''
+    word = word.lower()
+
+    best_type = naive_checker(word, naive_dict)
+    
+    if best_type == None:
+        print(f"'{word}' was not found naively, using vectors")
+        best_type = vector_checker(word, type_vectors, model)
+    
+    print(best_type,"is the best type for", word)
+    return best_type
+    
+def sentence_classifier(string, naive_dict, type_vectors, model, nlp):
     ''' classifies a sentence and returns interesting results '''
     doc = nlp(string)
     
     interesting_results = []
     
     for token in doc:
-        best_type = word_classifier(token.text, avg_type_vecs, model)
-        if best_type not in ('O', 'B-MISC', 'I-MISC'):
+        best_type = word_classifier(token.text, naive_dict, type_vectors, model)
+        if best_type != 'O':
             interesting_results.append((token.text, best_type))
     
     return interesting_results
 
 def main():
-    print('Loading models...')
+    print('Loading model(s)...')
     start = time.time()
     # model = gensim.downloader.load('word2vec-google-news-300') # This one is slower to load
-    # model2 = gensim.downloader.load('glove-twitter-50')
-
-    model = gensim.downloader.load('glove-wiki-gigaword-50') # This one is faster to load
+    model = gensim.downloader.load('glove-twitter-100')
+    # model = gensim.downloader.load('glove-wiki-gigaword-50') # This one is faster to load
     nlp = spacy.load("en_core_web_sm")
     print('Done. ({} seconds)'.format(time.time() - start))
-
-
+    print('-------------')
+    print('Building data...')
+    start - time.time()
     data = load_conll_data("conll2003/train.txt")
+    naive_dict = probabalize_naive_dict(build_naive_dict(data))
     type_dict = classify_conll_types(data)
     type_vectors = calculate_category_vectors(type_dict, model)
-    type2 = word_classifier("and", type_vectors, model)
-    print(type2,"is the best type")
-    type3 = word_classifier("of", type_vectors, model)
-    print(type3,"is the best type")
+    print('Done. ({} seconds)'.format(time.time() - start))
+    print('-------------')
+    # word_classifier("napoleon", naive_dict, type_vectors, model)
+    # word_classifier("fork", naive_dict, type_vectors, model)
     
-    # sentence = "I have a lot of money and Elon Musk has a lot too. But I don't live in Texas."
-    # type_sentence = sentence_classifier(sentence, type_vectors, model, nlp)
+    # sentence = "Ryan Reynolds paid $10,000 of his own money for the right to wear a shirt with The Golden Girl’s Bea Arthur on it in Deadpool. The estate agreed for a donation in that amount to a charity of their choosing. Ryan paid it himself because he felt you couldn’t have Deadpool without Bea Arthur."
+    # type_sentence = sentence_classifier(sentence, naive_dict, type_vectors, model, nlp)
+    
+    with open('testfile.txt', 'r') as file:
+        text = file.read().replace('\n', '')
 
-    # print(type_sentence)
+    print(sentence_classifier(text, naive_dict, type_vectors, model, nlp))
     
 
 if __name__ == "__main__":
