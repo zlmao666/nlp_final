@@ -158,7 +158,7 @@ def sentence_classifier(string, naive_dict, type_vectors, model, nlp):
     
     for token in doc:
         best_type = word_classifier(token.text, naive_dict, type_vectors, model)
-        if best_type != 'O':
+        if best_type not in ('O', 'B-MISC', 'I-MISC'):
             interesting_results.append((token.text, best_type))
     
     return interesting_results
