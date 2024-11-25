@@ -144,7 +144,7 @@ def main():
     train_data = load_test_data("conll2003/train.txt")
     naive_dict = NER_naive.probabalize_naive_dict(NER_naive.build_naive_dict(train_data))
     type_dict = NER_naive.classify_conll_types(train_data)
-    model = gensim.downloader.load('glove-wiki-gigaword-50')
+    model = gensim.downloader.load('glove-twitter-100')
     type_vectors = NER_naive.calculate_category_vectors(type_dict, model)
     
 

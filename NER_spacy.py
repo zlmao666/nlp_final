@@ -1,7 +1,7 @@
 import spacy
 
 def spacy_file_loader(file_path):
-    '''load test file data into nested lists, with the inner lists storing sentences splited by -DOCSTART-'''
+    '''load test file data into nested lists, with the inner lists storing sentences as splited by -DOCSTART-'''
     doc = []
     i = -1  #counter
     with open(file_path, "r", encoding="utf-8") as f:
@@ -14,19 +14,6 @@ def spacy_file_loader(file_path):
             else:
                 doc[i].append(word)
     return doc
-
-def get_ner_types(file_path):
-    """
-    Returns a clean list of tuples (word, type), limiting types to 
-    PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
-    """
-    result = []
-    doc = spacy_file_loader(file_path)
-    for sentence_ls in doc:
-        result.extend(process_spacy_doc(sentence_ls))
-
-    return result
-
 
 def process_spacy_doc(sentence_ls):
     """
@@ -57,3 +44,17 @@ def process_spacy_doc(sentence_ls):
         result.append((word.text, entity_type))
 
     return result
+
+def get_ner_types(file_path):
+    """
+    Returns a clean list of tuples (word, type), limiting types to 
+    PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
+    """
+    result = []
+    doc = spacy_file_loader(file_path)
+    for sentence_ls in doc:
+        result.extend(process_spacy_doc(sentence_ls))
+
+    return result
+
+print(get_ner_types("conll2003/test copy.txt"))
