@@ -2,39 +2,66 @@ import spacy
 
 nlp = spacy.load("en_core_web_sm")
 
-def get_ner_types(doc):
-    """
-    Given a list of words, returns a list of tuples with (word, type),
-    limiting types to PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
-    """
-    # Create a SpaCy document from the list of words
-    text = " ".join(doc)
-    spacy_doc = nlp(text)
+def spacy_file_loader(file_path):
+    doc = []
+    with open(file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            tokens = line.split()
+            doc.append(tokens[0])
+    return doc
 
-    # List to store the results (word, type)
+def get_ner_types(file_path):
+    """
+    Returns a clean list of tuples (word, type), limiting types to 
+    PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
+    """
     result = []
-
-    # Iterate over the entities found by SpaCy
-    for ent in spacy_doc.ents:
-        # Check the entity type and map it to the required ones
-        if ent.label_ == "PERSON":
-            entity_type = "PER"
-        elif ent.label_ == "ORG":
-            entity_type = "ORG"
-        elif ent.label_ == "MISC":
-            entity_type = "MISC"
+    current_doc = []
+    doc = spacy_file_loader(file_path)
+    for line in doc:
+        # Check for "-DOCSTART-" to indicate a new document
+        if line.strip() == "-DOCSTART-":
+            if current_doc:
+                result.extend(process_spacy_doc(current_doc))
+                current_doc = []  # Reset for the next document
         else:
-            entity_type = "O"  # For any other entity type or non-entity words
+            # Add non-empty lines to the current document
+            if line.strip():
+                current_doc.append(line.strip())
 
-        # Add the word and its type to the result list
-        result.append((ent.text, entity_type))
-
-    # Handle words that are not part of any entity (label them as "O")
-    # Create a list of all words with their types, ensuring all words are processed
-    for word in spacy_doc:
-        # If the word is not part of any entity, mark it as "O"
-        if not any(word.text == ent.text for ent in spacy_doc.ents):
-            result.append((word.text, "O"))
+    # Process the last document if any
+    if current_doc:
+        result.extend(process_spacy_doc(current_doc))
 
     return result
 
+
+def process_spacy_doc(doc_lines):
+    """
+    Helper function to process a single document (list of lines) using SpaCy.
+    Returns a list of tuples (word, type).
+    """
+    # Join the document lines into a single string for SpaCy processing
+    text = " ".join(doc_lines)
+    spacy_doc = nlp(text)
+
+    # List to store results
+    result = []
+    MISC_labels = {"WORK_OF_ART", "PRODUCT", "EVENT", "LANGUAGE", "NORP"} 
+    LOC_labels = {"GPE", "LOC","FAC"} 
+    for word in spacy_doc:
+        if word.ent_type_ == "PERSON":
+            entity_type = "PER"
+        elif word.ent_type_ == "ORG":
+            entity_type = "ORG"
+        elif word.ent_type_ in LOC_labels:
+            entity_type = "LOC"
+        elif word.ent_type_ in MISC_labels:
+            entity_type = "MISC"
+        else:
+            entity_type = "O"  # For non-entity words
+
+        # Append the word and its entity type as a tuple
+        result.append((word.text, entity_type))
+
+    return result
