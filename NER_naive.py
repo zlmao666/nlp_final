@@ -100,10 +100,9 @@ def vector_checker(word, type_vectors, model):
     best_similarity = -1  # Cosine similarity ranges from -1 to 1
     
     try:
-        # Get the vector for the word
         word_vec = model.get_vector(word)
     except KeyError:
-        # If the word is not in the model's vocabulary, the word is classified as other (O)
+        # If the word is not in the model's vocabulary,
         if word.isalpha():
             best_type = 'PER'
         else:
@@ -116,7 +115,7 @@ def vector_checker(word, type_vectors, model):
     for ner_type in type_vectors:
         
         type_vector = type_vectors[ner_type]
-        
+ 
         if type_vector is None or np.isnan(type_vector).any():
             # print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
             continue
