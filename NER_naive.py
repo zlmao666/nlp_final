@@ -26,11 +26,6 @@ def load_conll_data(file_path):
             attributes.append((word, pos_tag, chunk_tag, ner_tag))
 
     return attributes
-    
-def merge_dicts(dict1, dict2):
-
-    newdict = collections.Counter(dict1) + collections.Counter(dict2)
-    return dict(newdict)
 
 def get_conll_types():
     '''helper function to return a list of types'''
@@ -213,7 +208,7 @@ def bootstrap():
     print('Done. ({} seconds)'.format(time.time() - start))
     print('-------------')
     print('Building data...')
-    start - time.time()
+    start = time.time()
     data = load_conll_data("conll2003/train.txt")
     naive_dict = probabalize_naive_dict(build_naive_dict(data))
     type_dict = classify_conll_types(data)
