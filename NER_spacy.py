@@ -1,15 +1,40 @@
 import spacy
 
-# Load the English NLP model
 nlp = spacy.load("en_core_web_sm")
 
-# Input text for NER
-text = "The hydrophobic effect the tendency of nonpolar molecules or parts of molecules to aggregate in aqueous media is central to biomolecular recognition. It now seems that there is no single “hydrophobic effect” 1−4 that adequately describes the partitioning of a small apolar ligand between both (i) an aqueous phase and a nonpolar organic phase (e.g., buffer and octanol), and (ii) bulk aqueous buffer and the active site of a protein (i.e., biomolecular recognition). While the molecular-level mechanisms of hydrophobic effects in biomolecular recognition remain a subject of substantial controversy, it is clear that the water molecules surrounding the apolar ligand and filling the active site of the protein are an important part of these mechanisms.1−10 Clarifying the role of water in the hydrophobic effect in protein−ligand binding would be an important contribution to understanding the fundamental, mechanistic basis of molecular recognition. Resolving this mechanism would, however, still leave a (presumably) related phenomena unresolved: so-called, enthalpy−entropy compensation (H/S compensation)."
+def get_ner_types(doc):
+    """
+    Given a list of words, returns a list of tuples with (word, type),
+    limiting types to PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
+    """
+    # Create a SpaCy document from the list of words
+    text = " ".join(doc)
+    spacy_doc = nlp(text)
 
+    # List to store the results (word, type)
+    result = []
 
-# Process the text
-doc = nlp(text)
+    # Iterate over the entities found by SpaCy
+    for ent in spacy_doc.ents:
+        # Check the entity type and map it to the required ones
+        if ent.label_ == "PERSON":
+            entity_type = "PER"
+        elif ent.label_ == "ORG":
+            entity_type = "ORG"
+        elif ent.label_ == "MISC":
+            entity_type = "MISC"
+        else:
+            entity_type = "O"  # For any other entity type or non-entity words
 
-# Extract and print entities
-for ent in doc.ents:
-    print(ent.text, ent.label_)
+        # Add the word and its type to the result list
+        result.append((ent.text, entity_type))
+
+    # Handle words that are not part of any entity (label them as "O")
+    # Create a list of all words with their types, ensuring all words are processed
+    for word in spacy_doc:
+        # If the word is not part of any entity, mark it as "O"
+        if not any(word.text == ent.text for ent in spacy_doc.ents):
+            result.append((word.text, "O"))
+
+    return result
+

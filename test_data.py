@@ -1,5 +1,4 @@
-import final
-import compare
+import nlp_final.NER_naive as NER_naive
 import numpy as np
 import sys
 
@@ -32,11 +31,11 @@ def print_data(accuracy, precision, recall, f1):
 
 def main():
 
-    data, doc = parse_test_data(final.load_conll_data("conll2003/test.txt"))
-    model, nlp, naive_dict, type_vectors = final.bootstrap()
+    data, doc = parse_test_data(NER_naive.load_conll_data("conll2003/test.txt"))
+    model, nlp, naive_dict, type_vectors = NER_naive.bootstrap()
     
     # spacy_prediction = create_comparison_vectors(final.get_spacy_prediction()) # IMPLEMENT FUNCTION get_spacy_prediction() in final.py
-    naive_prediction = create_comparison_vectors(final.sentence_classifier_all_results(doc, naive_dict, type_vectors, model, nlp))
+    naive_prediction = create_comparison_vectors(NER_naive.sentence_classifier_all_results(doc, naive_dict, type_vectors, model, nlp))
     true_data = create_comparison_vectors(data)
     
     print(naive_prediction.shape)
