@@ -1,13 +1,18 @@
 import spacy
 
-nlp = spacy.load("en_core_web_sm")
-
 def spacy_file_loader(file_path):
+    '''load test file data into nested lists, with the inner lists storing sentences splited by -DOCSTART-'''
     doc = []
+    i = -1  #counter
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
             tokens = line.split()
-            doc.append(tokens[0])
+            word = tokens[0]
+            if word == "-DOCSTART-":
+                doc.append([])
+                i = i + 1
+            else:
+                doc[i].append(word)
     return doc
 
 def get_ner_types(file_path):
@@ -16,39 +21,26 @@ def get_ner_types(file_path):
     PER (Person), ORG (Organization), MISC (Miscellaneous), and O (Outside).
     """
     result = []
-    current_doc = []
     doc = spacy_file_loader(file_path)
-    for line in doc:
-        # Check for "-DOCSTART-" to indicate a new document
-        if line.strip() == "-DOCSTART-":
-            if current_doc:
-                result.extend(process_spacy_doc(current_doc))
-                current_doc = []  # Reset for the next document
-        else:
-            # Add non-empty lines to the current document
-            if line.strip():
-                current_doc.append(line.strip())
-
-    # Process the last document if any
-    if current_doc:
-        result.extend(process_spacy_doc(current_doc))
+    for sentence_ls in doc:
+        result.extend(process_spacy_doc(sentence_ls))
 
     return result
 
 
-def process_spacy_doc(doc_lines):
+def process_spacy_doc(sentence_ls):
     """
     Helper function to process a single document (list of lines) using SpaCy.
     Returns a list of tuples (word, type).
     """
+    nlp = spacy.load("en_core_web_sm")
     # Join the document lines into a single string for SpaCy processing
-    text = " ".join(doc_lines)
+    text = " ".join(sentence_ls)
     spacy_doc = nlp(text)
 
-    # List to store results
     result = []
-    MISC_labels = {"WORK_OF_ART", "PRODUCT", "EVENT", "LANGUAGE", "NORP"} 
-    LOC_labels = {"GPE", "LOC","FAC"} 
+    MISC_labels = {"LANGUAGE", "NORP"} 
+    LOC_labels = {"GPE", "LOC"} 
     for word in spacy_doc:
         if word.ent_type_ == "PERSON":
             entity_type = "PER"
@@ -59,7 +51,7 @@ def process_spacy_doc(doc_lines):
         elif word.ent_type_ in MISC_labels:
             entity_type = "MISC"
         else:
-            entity_type = "O"  # For non-entity words
+            entity_type = "O"  
 
         # Append the word and its entity type as a tuple
         result.append((word.text, entity_type))

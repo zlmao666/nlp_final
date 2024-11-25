@@ -151,7 +151,6 @@ def main():
     # Evaluate the classifier
     test_data = load_test_data("conll2003/test.txt")
     test_result, doc = parse_test_data(test_data)
-    doc = doc[:500]
     naive_result = get_naive_result(doc, naive_dict, type_vectors, model)
     spacy_result = NER_spacy.get_ner_types("conll2003/test.txt")
     print("Naive NER:")
