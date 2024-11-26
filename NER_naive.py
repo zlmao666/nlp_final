@@ -104,7 +104,6 @@ def vector_checker(word, type_vectors, model):
             best_type = 'O'
         return best_type
 
-    # print(f"Vector for word '{word}': {word_vec[:5]}...")  # Show the first 5 values of the vector
     
     # Loop over all types in the type_dict (NER categories)
     for ner_type in type_vectors:
@@ -112,15 +111,12 @@ def vector_checker(word, type_vectors, model):
         type_vector = type_vectors[ner_type]
  
         if type_vector is None or np.isnan(type_vector).any():
-            # print(f"Skipping type {ner_type} due to invalid vector (NaN or None).")
             continue
 
-        # print(f"Avg vector for type '{ner_type}': {type_vector[:5]}...")  # Show first 5 elements of the avg vector
 
         # Calculate cosine similarity between the word vector and the average category vector
         similarity = np.dot(word_vec, type_vector) / (np.linalg.norm(word_vec) * np.linalg.norm(type_vector))
 
-        # print(f"Similarity between '{word}' and type '{ner_type}': {similarity:.4f}")
 
         # Update the best similarity and corresponding type if necessary
         if similarity > best_similarity:
