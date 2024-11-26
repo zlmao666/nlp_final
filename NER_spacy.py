@@ -60,19 +60,16 @@ def process_spacy_doc(sentence_ls):
     j = 0
     
     while j < len(spacy_doc):
-        # print(j)
         word = spacy_doc[j]
         text = word.text
         jj = 0
         ent_types = [word.ent_type_]
         
         while text != sentence_ls[i]:
-            # print(text, " vs ", sentence_ls[i])
             jj += 1
             text += spacy_doc[j+jj].text
             ent_types.append(spacy_doc[j+jj].ent_type_)
         
-        # print(text, " vs ", sentence_ls[i])
         ent_type = get_most_frequent(ent_types)
         
         result.append((text, map_spacy_types(ent_type)))
@@ -94,7 +91,7 @@ def get_ner_types(file_path):
     return result
 
 def main():
-    print(get_ner_types("conll2003/test copy.txt"))
+    print("Not this file!")
     
 if __name__ == "__main__":
     main()
