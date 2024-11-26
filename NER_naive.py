@@ -133,10 +133,8 @@ def word_classifier(word, naive_dict, type_vectors, model):
     best_type = naive_checker(word, naive_dict)
     
     if best_type == None:
-        # print(f"'{word}' was not found naively, using vectors")
         best_type = vector_checker(word, type_vectors, model)
     
-    # print(best_type,"is the best type for", word)
     return best_type
     
 def sentence_classifier(doc, naive_dict, type_vectors, model, nlp):
@@ -180,17 +178,12 @@ def sentence_classifier_all_results(doc, naive_dict, type_vectors, model, nlp):
     
     return results
     
-def get_spacy_prediction(): #IMPLEMENT THIS
-
-    return None
-    
+   
 def bootstrap():
     ''' load models and data '''
     print('Loading model(s)...')
     start = time.time()
-    # model = gensim.downloader.load('word2vec-google-news-300') # This one is slower to load
     model = gensim.downloader.load('glove-twitter-100')
-    # model = gensim.downloader.load('glove-wiki-gigaword-50') # This one is faster to load
     nlp = spacy.load("en_core_web_sm")
     print('Done. ({} seconds)'.format(time.time() - start))
     print('-------------')
