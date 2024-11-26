@@ -218,13 +218,7 @@ def main():
 
     model, nlp, naive_dict, type_vectors = bootstrap()
     
-    # word_classifier("napoleon", naive_dict, type_vectors, model)
-    # word_classifier("fork", naive_dict, type_vectors, model)
-    
-    # sentence = "Ryan Reynolds paid $10,000 of his own money for the right to wear a shirt with The Golden Girl’s Bea Arthur on it in Deadpool. The estate agreed for a donation in that amount to a charity of their choosing. Ryan paid it himself because he felt you couldn’t have Deadpool without Bea Arthur."
-    # type_sentence = sentence_classifier(sentence, naive_dict, type_vectors, model, nlp)
-    
-    with open('testfile.txt', 'r') as file:
+    with open('input.txt', 'r') as file:
         text = file.read().replace('\n', '')
 
     print(sentence_classifier(text, naive_dict, type_vectors, model, nlp))
