@@ -29,7 +29,6 @@ def load_conll_data(file_path):
 
 def get_conll_types():
     '''helper function to return a list of types'''
-    # types = ('B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC')
     types = ('ORG', 'O', 'MISC', 'PER', 'LOC')
     return types
     
@@ -68,14 +67,6 @@ def classify_conll_types(lst):
         ner_type = ls[3]
         dic[ner_type].append(word) # Does not avoid duplcates
     
-    ''' OLD CODE
-    # Then append the words to the correct types
-    for ls in lst:
-        for key in dic.keys():
-            if ls[3] == key:
-                if ls[0] not in dic[key]:       # Avoid replicates
-                    dic[key].append(ls[0])     # Append the word to the type
-    '''
     return dic
 
 def calculate_category_vectors(type_dict, model):
@@ -218,7 +209,7 @@ def main():
 
     model, nlp, naive_dict, type_vectors = bootstrap()
     
-    with open('input.txt', 'r') as file:
+    with open('testfile.txt', 'r') as file:
         text = file.read().replace('\n', '')
 
     print(sentence_classifier(text, naive_dict, type_vectors, model, nlp))
